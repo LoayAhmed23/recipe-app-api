@@ -57,6 +57,7 @@ class Recipe(models.Model):
     price = models.DecimalField(max_digits=5, decimal_places=2)
     link = models.CharField(max_length=255)
     tags = models.ManyToManyField('Tag')
+    ingredients = models.ManyToManyField('Ingredient')
 
     def __str__(self):
         """Overriding the str opperator"""
@@ -65,6 +66,19 @@ class Recipe(models.Model):
 
 class Tag(models.Model):
     """Tag for filtering Recipes"""
+    name = models.CharField(max_length=255)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+    )
+
+    def __str__(self):
+        """Overriding the str opperator"""
+        return self.name
+
+
+class Ingredient(models.Model):
+    """Ingredients for Recipes"""
     name = models.CharField(max_length=255)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
