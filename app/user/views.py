@@ -18,6 +18,8 @@ from user.serializers import (
     ProfileImageSerialzer,
 )
 
+from drf_spectacular.utils import extend_schema
+
 
 class CreateUserView(generics.CreateAPIView):
     """Create a new user in the system"""
@@ -46,6 +48,11 @@ class UploadUserImageView(APIView):
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [permissions.IsAuthenticated]
 
+    @extend_schema(
+        request=ProfileImageSerialzer,
+        responses={200: ProfileImageSerialzer},
+        description="Upload profile image",
+    )
     def post(self, request):
         user = request.user
         serializer = ProfileImageSerialzer(
