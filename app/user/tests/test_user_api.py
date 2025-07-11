@@ -8,10 +8,15 @@ from django .urls import reverse
 from rest_framework.test import APIClient
 from rest_framework import status
 
+from PIL import Image
+
+import tempfile
+import os
 
 CREATE_USER_URL = reverse('user:create')
 TOKEN_USER_URL = reverse('user:token')
 ME_URL = reverse('user:me')
+UPLOAD_IMAGE_URL = reverse('user:upload-image')
 
 
 def create_user(**params):
@@ -165,3 +170,39 @@ class PrivateUserAPITests(TestCase):
         self.assertEqual(self.user.name, payload['name'])
         self.assertTrue(self.user.check_password(payload['password']))
         self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+
+class ImageUploadTest(TestCase):
+    """Tests for the image upload API"""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.user = create_user(email='test@example.com', password='password')
+        self.client.force_authenticate(self.user)
+
+    def tearDown(self):
+        self.user.profile_image.delete()
+
+    def test_upload_image(self):
+        """"Test uploading a profile image"""
+        with tempfile.NamedTemporaryFile(suffix='.jpg') as image_file:
+            img = Image.new('RGB', (10, 10))
+            img.save(image_file, format='JPEG')
+            image_file.seek(0)
+            payload = {'profile_image': image_file}
+            res = self.client.post(UPLOAD_IMAGE_URL,
+                                   payload,
+                                   foramt='multipart'
+                                   )
+
+        self.user.refresh_from_db()
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertIn('profile_image', res.data)
+        self.assertTrue(os.path.exists(self.user.profile_image.path))
+
+    def test_upload_image_bad_request(self):
+        """"Test uploading an invalid image"""
+        payload = {'profile_image': 'stringdata'}
+        res = self.client.post(UPLOAD_IMAGE_URL, payload, format='multipart')
+
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)

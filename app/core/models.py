@@ -13,6 +13,14 @@ from django.contrib.auth.models import (
 )
 
 
+def profile_image_file_path(instance, file_name):
+    """Generate file path for uploaded image"""
+    ext = os.path.splitext(file_name)[1]
+    file_name = f'{uuid.uuid4()}{ext}'
+
+    return os.path.join('uploads', 'profile_image', file_name)
+
+
 def recipe_image_file_path(instance, file_name):
     """Generate file path for uploaded image"""
     ext = os.path.splitext(file_name)[1]
@@ -50,6 +58,10 @@ class User(AbstractBaseUser, PermissionsMixin):
     name = models.CharField(max_length=255)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
+    profile_image = models.ImageField(
+        null=True,
+        upload_to=profile_image_file_path
+    )
 
     objects = UserManager()
 
